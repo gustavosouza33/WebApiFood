@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WebApiFood.Controllers
 {
@@ -25,9 +24,10 @@ namespace WebApiFood.Controllers
         private readonly AuthService _auth;
         public AccountsController(DeliveryDbContext dbContext, IConfiguration configuration)
         {
+            _configuration = configuration;
             _auth = new AuthService(_configuration);
             _dbContext = dbContext;
-            _configuration = configuration;
+            
 
         }
 
@@ -64,6 +64,7 @@ namespace WebApiFood.Controllers
             {
                 return StatusCode(StatusCodes.Status401Unauthorized);
             }
+            //Cria uma objeto claim para transmitir as informações com segurança. 
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
@@ -72,7 +73,7 @@ namespace WebApiFood.Controllers
                 new Claim(ClaimTypes.Name, user.Email),
                 new Claim(ClaimTypes.Role, userEmail.Role)
             };
-
+            //Retorna o objeto token que contém o acesso e todas as outras informações para o usuário.
             var token = _auth.GenerateAccessToken(claims);
             return new ObjectResult(new
             {
