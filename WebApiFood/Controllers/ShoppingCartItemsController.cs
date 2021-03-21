@@ -103,7 +103,7 @@ namespace WebApiFood.Controllers
             var shoppingCart = _dbContext.ShoppingCartItems.Where(s => s.CustomerId == userId);
             _dbContext.ShoppingCartItems.RemoveRange(shoppingCart);
             _dbContext.SaveChanges();
-            return Ok();
+            return Ok("Item apagado com sucesso !");
 
         }
     }

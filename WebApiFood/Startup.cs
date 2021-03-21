@@ -13,6 +13,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApiFood.Data;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.ResponseCompression;
+
 namespace WebApiFood
 {
     public class Startup
@@ -27,16 +32,37 @@ namespace WebApiFood
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+           
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+                options.Providers.Add<GzipCompressionProvider>();
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/json" });
+            });
             services.AddControllers();
 
          
             services.AddMvc(option => option.EnableEndpointRouting = false)
            .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
            .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
- 
-            services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=DeliveryDb;User ID=DESKTOP-3LEPS5U\Gustavo;" + "Integrated Security=true;"));
 
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+             .AddJwtBearer(options =>
+             {
+                 options.TokenValidationParameters = new TokenValidationParameters
+                 {
+                     ValidateIssuer = true,
+                     ValidateAudience = true,
+                     ValidateLifetime = true,
+                     ValidateIssuerSigningKey = true,
+                     ValidIssuer = Configuration["Tokens:Issuer"],
+                     ValidAudience = Configuration["Tokens:Issuer"],
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
+                     ClockSkew = TimeSpan.Zero,
+                 };
+             });
+           //  services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=DeliveryDb;User ID=DESKTOP-3LEPS5U\Gustavo;" + "Integrated Security=true;"));
+            services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
         }
 
@@ -52,12 +78,13 @@ namespace WebApiFood
             }
 
             app.UseHttpsRedirection();
-
+            app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthentication();
-            app.UseStaticFiles();
             app.UseAuthorization();
+            app.UseResponseCompression();
             deliveryDbContext.Database.EnsureCreated();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

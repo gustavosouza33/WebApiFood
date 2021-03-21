@@ -8,15 +8,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApiFood.Data;
 using WebApiFood.Models;
-using ImageUploader;
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WebApiFood.Controllers
 {
     
         [Route("api/[controller]")]
         [ApiController]
-        [Authorize]
+       
         public class ProductsController : ControllerBase
         {
             private DeliveryDbContext _dbContext;
@@ -25,23 +23,23 @@ namespace WebApiFood.Controllers
                 _dbContext = dbContext;
             }
             // GET: api/Products
-            [Authorize(Roles = "Admin")]
+            [Authorize(Roles = "Admin,User")]
             [HttpGet]
-            public IActionResult Get()
+            public IActionResult Get() //Retorna todos os produtos
             {
                 return Ok(_dbContext.Products);
             }
 
             // GET: api/Products/5
             [HttpGet("{id}")]
-            public IActionResult Get(int id)
+            public IActionResult Get(int id) //Retorna um produto pelo ID informado
             {
                 return Ok(_dbContext.Products.Find(id));
             }
 
             // GET: api/Products/ProductsByCategory/5
             [HttpGet("[action]/{categoryId}")]
-            public IActionResult ProductsByCategory(int categoryId)
+            public IActionResult ProductsByCategory(int categoryId) //Retorna os produtos pelo ID da categoria informado
             {
                 var products = from v in _dbContext.Products
                                where v.CategoryId == categoryId
@@ -60,7 +58,7 @@ namespace WebApiFood.Controllers
 
             // GET: api/Products/ProductsByRestaurant/5
             [HttpGet("[action]/{restaurantId}")]
-            public IActionResult ProductsByRestaurant(int restaurantId)
+            public IActionResult ProductsByRestaurant(int restaurantId) //Retorna os produtos pelo ID do restaurante informado
             {
                 var products = from v in _dbContext.Products
                                where v.RestaurantId == restaurantId
@@ -80,7 +78,7 @@ namespace WebApiFood.Controllers
             }
             // GET: api/Products/PopularProducts
             [HttpGet("[action]")]
-            public IActionResult PopularProducts()
+            public IActionResult PopularProducts() //Retorna os produtos populares
             {
                 var products = from v in _dbContext.Products
                                where v.IsPopularProduct == true
@@ -100,30 +98,24 @@ namespace WebApiFood.Controllers
             [Authorize(Roles = "Admin")]
             [HttpPost]
 
-            public IActionResult Post([FromBody] Product product)
+            public IActionResult Post([FromBody] Product product) //Adiciona um novo produto
             {
-                var stream = new MemoryStream(product.ImageArray);
-                var guid = Guid.NewGuid().ToString();
-                var file = $"{guid}.jpg";
-                var folder = "wwwroot";
-                var response = FilesHelper.UploadImage(stream, folder, file);
-                if (!response)
+
+                if (product==null)
                 {
-                    return BadRequest();
+                    return BadRequest("Produto nulo");
                 }
-                else
-                {
-                    product.ImageUrl = file;
-                    _dbContext.Products.Add(product);
-                    _dbContext.SaveChanges();
-                    return StatusCode(StatusCodes.Status201Created);
-                }
+            
+                _dbContext.Products.Add(product);
+                _dbContext.SaveChanges();
+                 return StatusCode(StatusCodes.Status201Created);
+                
             }
 
             // PUT: api/Products/5
             [Authorize(Roles = "Admin")]
             [HttpPut("{id}")]
-            public IActionResult Put(int id, [FromBody] Product product)
+            public IActionResult Put(int id, [FromBody] Product product) //Altera um produto pelo ID do produto informado
             {
                 var entity = _dbContext.Products.Find(id);
                 if (entity == null)
@@ -131,25 +123,15 @@ namespace WebApiFood.Controllers
                     return NotFound("Produto não enconrado !");
                 }
 
-                var stream = new MemoryStream(product.ImageArray);
-                var guid = Guid.NewGuid().ToString();
-                var file = $"{guid}.jpg";
-                var folder = "wwwroot";
-                var response = FilesHelper.UploadImage(stream, folder, file);
-                if (!response)
-                {
-                    return BadRequest();
-                }
                 else
-                {
-                    var temp = entity.ImageUrl;
-
-                    System.IO.File.Delete("C:/Users/Gustavo/Desktop/Ecommerce-Api-master/FoodApi/FoodApi/wwwroot/" + temp);
-                    //  entity.CategoryId = product.CategoryId;
+                {     
+                   
                     entity.Name = product.Name;
-                    entity.ImageUrl = file;
+                    entity.ImageUrl = product.ImageUrl;
                     entity.Price = product.Price;
                     entity.Detail = product.Detail;
+                    entity.IsPopularProduct = product.IsPopularProduct;
+                    entity.CategoryId = product.CategoryId;
                     _dbContext.SaveChanges();
                     return Ok("Produto atualizado com sucesso !");
                 }
@@ -158,7 +140,7 @@ namespace WebApiFood.Controllers
             // DELETE: api/ApiWithActions/5
             [Authorize(Roles = "Admin")]
             [HttpDelete("{id}")]
-            public IActionResult Delete(int id)
+            public IActionResult Delete(int id) //Deleta um produto pelo ID do produto informado
             {
                 var product = _dbContext.Products.Find(id);
                 if (product == null)

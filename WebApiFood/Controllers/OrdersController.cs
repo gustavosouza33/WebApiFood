@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using WebApiFood.Data;
 using WebApiFood.Models;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace WebApiFood.Controllers
 {
     [Route("api/[controller]")]
@@ -23,11 +21,11 @@ namespace WebApiFood.Controllers
             _dbContext = dbContext;
         }
 
-        // Para o Admin
+      
         // GET: api/Orders/PendingOrders
         [Authorize(Roles = "Admin")]
         [HttpGet("[action]")]
-        public IActionResult PendingOrders()
+        public IActionResult PendingOrders() //Retorna os pedidos em aberto.
         {
             var orders = _dbContext.Orders.Where(order => order.IsOrderCompleted == false);
             return Ok(orders);
@@ -36,7 +34,7 @@ namespace WebApiFood.Controllers
         // GET: api/Orders/CompletedOrders
         [Authorize(Roles = "Admin")]
         [HttpGet("[action]")]
-        public IActionResult CompletedOrders()
+        public IActionResult CompletedOrders() //Retorna os pedidos finalizados.
         {
             var orders = _dbContext.Orders.Where(order => order.IsOrderCompleted == true);
             return Ok(orders);
@@ -44,7 +42,7 @@ namespace WebApiFood.Controllers
 
         // GET: api/Orders/OrderDetails/5
         [HttpGet("[action]/{orderId}")]
-        public IActionResult OrderDetails(int orderId)
+        public IActionResult OrderDetails(int orderId) //Retorna os detalhes do pedido pelo ID do pedido informado.
         {
 
             var orders = _dbContext.Orders.Where(order => order.Id == orderId)
@@ -58,7 +56,7 @@ namespace WebApiFood.Controllers
         // GET: api/Orders/OrdersCount
         [Authorize(Roles = "Admin")]
         [HttpGet("[action]")]
-        public IActionResult OrdersCount()
+        public IActionResult OrdersCount() //Retorna a quantidade de pedidos em aberto
         {
             var orders = (from order in _dbContext.Orders
                           where order.IsOrderCompleted == false
@@ -69,7 +67,7 @@ namespace WebApiFood.Controllers
 
         // GET: api/Orders/OrdersByUser/5
         [HttpGet("[action]/{userId}")]
-        public IActionResult OrdersByUser(int userId)
+        public IActionResult OrdersByUser(int userId) //Retorna os pedidos pelo ID de um usuário informado
         {
             var orders = _dbContext.Orders.Where(order => order.UserId == userId).OrderByDescending(o => o.OrderPlaced);
             return Ok(orders);
@@ -77,7 +75,7 @@ namespace WebApiFood.Controllers
 
         // POST: api/Orders
         [HttpPost]
-        public IActionResult Post([FromBody] Order order)
+        public IActionResult Post([FromBody] Order order) //Cria um novo pedido
         {
             order.IsOrderCompleted = false;
             order.OrderPlaced = DateTime.Now;
@@ -109,7 +107,7 @@ namespace WebApiFood.Controllers
         // PUT: api/Orders/MarkOrderComplete/5
         [Authorize(Roles = "Admin")]
         [HttpPut("[action]/{orderId}")]
-        public IActionResult MarkOrderComplete(int orderId, [FromBody] Order order)
+        public IActionResult MarkOrderComplete(int orderId)  //Altera o pedido e marca como finalizado
         {
             var entity = _dbContext.Orders.Find(orderId);
             if (entity == null)
@@ -118,10 +116,25 @@ namespace WebApiFood.Controllers
             }
             else
             {
-                entity.IsOrderCompleted = order.IsOrderCompleted;
+                entity.IsOrderCompleted = true;
                 _dbContext.SaveChanges();
                 return Ok("Pedido finalizado.");
             }
+        }
+
+        //DELETE: api/Orders/5
+        [Authorize(Roles ="Admin")]
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id) //Deleta um pedido pelo ID do pedido informado
+        {
+            var order = _dbContext.Orders.Find(id);
+            if (order == null)
+            {
+                return NotFound("Não existe pedido com esse ID !");
+            }
+            _dbContext.Remove(order);
+            _dbContext.SaveChanges();
+            return Ok("Pedido deletado com sucesso !");
         }
     }
 }
