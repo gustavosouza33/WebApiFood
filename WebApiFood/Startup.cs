@@ -61,8 +61,8 @@ namespace WebApiFood
                      ClockSkew = TimeSpan.Zero,
                  };
              });
-           //  services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=DeliveryDb;User ID=DESKTOP-3LEPS5U\Gustavo;" + "Integrated Security=true;"));
-            services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+           services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB; Initial Catalog=DeliveryDb;User ID=DESKTOP-3LEPS5U\Gustavo;" + "Integrated Security=true;"));
+            //services.AddDbContext<DeliveryDbContext>(option => option.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
         }
 
